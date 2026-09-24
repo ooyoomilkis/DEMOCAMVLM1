@@ -1,2 +1,0 @@
-# DEMOCAMVLM1
-Rynnbrain

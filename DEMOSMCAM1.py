@@ -4,7 +4,6 @@ from PIL import Image
 from transformers import AutoProcessor, AutoModelForVision2Seq
 
 
-
 # loading vlm nb
 MODEL_PATH = "Alibaba-DAMO-Academy/RynnBrain1.1-2B"
 model_id = "Alibaba-DAMO-Academy/RynnBrain-2B" # same thing as above
@@ -49,3 +48,34 @@ def capture_frame():
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame_rgb), frame
 
+
+# Working with Depth-Anything:
+import cv2
+import torch
+
+from depth_anything_v2.dpt import DepthAnythingV2
+
+DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+
+model_configs = {
+    'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
+    'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
+    'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
+    'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
+}
+
+encoder = 'vitl' # or 'vits', 'vitb', 'vitg'
+
+model = DepthAnythingV2(**model_configs[encoder])
+model.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{encoder}.pth', map_location='cpu'))
+model = model.to(DEVICE).eval()
+
+raw_img = cv2.imread('your/image/path')
+depth = model.infer_image(raw_img) # HxW raw depth map in numpy
+
+
+# baseline world model (find its strengths, weaknesses, this is what my capable)
+# preexisting camera world model, why would I want to create my own protoyep, etc etc
+# comparison across different systems (baseline spatial awareness) (plug that into diff algorithms)
+# train vlm giving spatial awareness understanding -> use that for robotic model training (current model fine tuned to detect patterns of action)
+# 
